@@ -24,14 +24,13 @@ import bootclim
 ncells = 8639
 nobs = 58
 HOME = os.path.expanduser("~/")
-data_path = "./"#HOME+"Copy/workspace/bayes_precip/data/"
+data_path = HOME+"Copy/workspace/bayes_precip/data/"
 
 gfs_data = np.loadtxt(data_path+"win_gfs.asc")
 pcm_h_data = np.loadtxt(data_path+"PR_win_pcm_hist.asc")
 #pcm_h_boot = bootclim.bootstrap(pcm_h_data, 100)
 pcm_f_data = np.loadtxt(data_path+"PR_win_pcm_fut.asc")[0:6,:]  # pick the first 6 years of the data
-#pcm_f_boot = bootclim.bootstrap(pcm_f_data, 100)
-#obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt")[:,:-4].T
+# pcm_f_boot = bootclim.bootstrap(pcm_f_data, 100)
 obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt").T
 
 obs_mask = np.loadtxt(data_path+"snotel_flag.txt")
@@ -42,12 +41,12 @@ dem = np.loadtxt(data_path+"dem.txt", skiprows=5)
 # Matrices for optimal interpolation
 #%%============================================================================
 doy_start = 1  # Jan. 1st
-doy_end = 120  # Apr. 30th
+doy_end = 120  # Apr. 30th (extra month to compensate for not including december)
 unc_obs = uncertainty.ObsUncertainty(obs_data, obs_mask, gfs_data)  # obs uncertainty object
-sig_min, sig_mean, sig_max = unc_obs.lopez(doy_start, doy_end)  # rep. error (dates go through april to compensate for not including december)
+sig_min, sig_mean, sig_max = unc_obs.lopez(doy_start, doy_end)  # representativity error
 R_min = 1*sig_min**2*np.diag(np.ones(nobs))
 R_mean = 2*sig_mean**2*np.diag(np.ones(nobs))
-R_max = 160000*sig_max**2*np.diag(np.ones(nobs)) #large number worst case scenario
+R_max = 160000*sig_max**2*np.diag(np.ones(nobs))  # large number worst case scenario
 P_cov = 1.2*np.cov(gfs_data.T)  # mod cov directly from data 
 Unc = np.sqrt(np.diag(P_cov))
 X = np.mean(gfs_data, axis=0).reshape(ncells, 1)  # model matrix
