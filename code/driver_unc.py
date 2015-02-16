@@ -11,12 +11,12 @@ Description: Driver file to run uncertainty analysis
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-import ttest
 import os
+import ttest
 import geotiff
 import uncertainty
 import dassim
-import bootclim
+# import bootclim
 
 #==============================================================================
 # Bring in data
@@ -28,13 +28,13 @@ data_path = HOME+"Copy/workspace/bayes_precip/data/"
 
 gfs_data = np.loadtxt(data_path+"win_gfs.asc")
 pcm_h_data = np.loadtxt(data_path+"PR_win_pcm_hist.asc")
-#pcm_h_boot = bootclim.bootstrap(pcm_h_data, 100)
-pcm_f_data = np.loadtxt(data_path+"PR_win_pcm_fut.asc")[0:6,:]  # pick the first 6 years of the data
+# pcm_h_boot = bootclim.bootstrap(pcm_h_data, 100)
+pcm_f_data = np.loadtxt(data_path+"PR_win_pcm_fut.asc")[0:6, :]  # pick the first 6 years of the data
 # pcm_f_boot = bootclim.bootstrap(pcm_f_data, 100)
 obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt").T
 
 obs_mask = np.loadtxt(data_path+"snotel_flag.txt")
-xyz = np.loadtxt(data_path+'ascGrid.xyz', skiprows=1)[:,0:2]
+xyz = np.loadtxt(data_path+'ascGrid.xyz', skiprows=1)[:, 0:2]
 dem = np.loadtxt(data_path+"dem.txt", skiprows=5)
 
 #==============================================================================
@@ -62,27 +62,27 @@ K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
 Unc_plus = np.sqrt(np.diag(P_plus))
-#np.save("stdev_post_min", Unc_plus)
-#P_plus = np.load("p_post_mean.npy")
+# np.save("stdev_post_min", Unc_plus)
+# P_plus = np.load("p_post_mean.npy")
 print "stdev_post_min written..."
 
-R = R_mean #+ np.diag(0.25*Z[:,0])**2  # set R matrix
+R = R_mean  # + np.diag(0.25*Z[:,0])**2  # set R matrix
 K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
 Unc_plus = np.sqrt(np.diag(P_plus))
-#np.save("stdev_post_mean", Unc_plus)
-#P_plus = np.load("p_post_mean.npy")
+# np.save("stdev_post_mean", Unc_plus)
+# P_plus = np.load("p_post_mean.npy")
 print "stdev_post_mean written..."
 
 
-R = R_max #+ np.diag(0.25*Z[:,0])**2  # set R matrix
+R = R_max  # + np.diag(0.25*Z[:,0])**2  # set R matrix
 K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
 Unc_plus = np.sqrt(np.diag(P_plus))
-#np.save("stdev_post_max", Unc_plus)
-#P_plus = np.load("p_post_max.npy")
+# np.save("stdev_post_max", Unc_plus)
+# P_plus = np.load("p_post_max.npy")
 print "stdev_post_max written..."
 
 
@@ -101,9 +101,9 @@ est_var_max =  Unc_plus_max * Unc_plus_max
 # T-tests
 #%%============================================================================
 mu_0 = np.zeros((pcm_h_data.shape[1]))
-#mu_unc_mean = 2*Unc_plus_mean*1.0  # uncertainty is ~2X stdev
-#mu_unc_min = 2*Unc_plus_mean*0.75  # uncertainty is ~2X stdev
-#mu_unc_max = 2*Unc_plus_mean*1.25# uncertainty is ~2X stdev
+# mu_unc_mean = 2*Unc_plus_mean*1.0  # uncertainty is ~2X stdev
+# mu_unc_min = 2*Unc_plus_mean*0.75  # uncertainty is ~2X stdev
+# mu_unc_max = 2*Unc_plus_mean*1.25  # uncertainty is ~2X stdev
 
 v_h = np.var(pcm_h_data, axis=0, ddof=1)
 v_f = np.var(pcm_f_data, axis=0, ddof=1)
@@ -128,7 +128,7 @@ sig_unc_min = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_min, rho=0.05,
 sig_unc_max = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_max, rho=0.05,
                                 alt="two.sided")  # perform t-test with uncert. 
 inv_vals = ttest.apply_invttest(gfs_data, mu=mu_0, df=8, p=0.95) # inverted t-test
-inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95) # inverted t-test with uncertainty added
+inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95)  # inverted t-test with uncertainty added
 
 unsig_unc_mean = mu_0
 unsig_unc_min = mu_0
@@ -144,7 +144,7 @@ xy_unsig_coord_mean = ttest.sigcoords(xyz, unsig_unc_mean)
 xy_unsig_coord_min = ttest.sigcoords(xyz, unsig_unc_min)
 xy_unsig_coord_max = ttest.sigcoords(xyz, unsig_unc_max)
 obs_coord = ttest.sigcoords(xyz, obs_mask)
-diff = 100*(Unc - Unc_plus_mean)/Unc #np.mean(pcm_f_data, axis=0) - np.mean(pcm_h_data, axis=0)
+diff = 100*(Unc - Unc_plus_mean)/Unc  # np.mean(pcm_f_data, axis=0) - np.mean(pcm_h_data, axis=0)
 
 #%%============================================================================
 # Gaussianity tests   
@@ -155,9 +155,9 @@ res_snot = ttest.gausstest(obs_data)
 #%%============================================================================
 # Save coordinate files    
 #==============================================================================
-#np.savetxt('unc_coords.csv', xy_unc_coord_mean.T)
-#np.savetxt('sig_coords.csv', xy_sig_coord.T)
-#np.savetxt('unsig_coords.csv', xy_unsig_coord_mean.T)
+# np.savetxt('unc_coords.csv', xy_unc_coord_mean.T)
+# np.savetxt('sig_coords.csv', xy_sig_coord.T)
+# np.savetxt('unsig_coords.csv', xy_unsig_coord_mean.T)
 
 '''
 Need to use QGIS to calculate aspect and elev of the different coordinate sets.
@@ -211,11 +211,20 @@ elev = np.flipud(elev)
 elev = m.transform_scalar(elev, lonElev, latElev, nx, ny)
 
 # Plot basemap
+'''
+Plot colors:
+- Diff = cm.rainbow
+- Grayscale = cm.gray
+- Precipitation = cm.gist_ncar
+- Variance = cm.hot
+- Inverted ttest = cm.gist_earth
+'''
+
 m.drawstates(linewidth=1, zorder=7)
 m.drawcountries(linewidth=1, zorder=6)
 m.imshow(elev, cmap=plt.cm.gray)
 p = m.contourf(lat, lon, diff_grid, cmap=plt.cm.rainbow, alpha=0.3,
-               antialiased=True, zorder=5, levels=np.linspace(0,64,9))  # use cm.rainbow for diff, cm.gray for grayscale, cm.gist_ncar for precip, cm.hot for variance, cm.gist_earth for invttest
+               antialiased=True, zorder=5, levels=np.linspace(0,64,9))
 p = m.contourf(lat, lon, diff_grid, cmap=plt.cm.rainbow, alpha=0.3,
                antialiased=True, zorder=5, levels=np.linspace(0,64,9))
 cbar = m.colorbar(p, location='right', pad="5%")
@@ -227,26 +236,26 @@ sig_x, sig_y = m(sig_xy[0,:], sig_xy[1,:])
 sig_x_unc_mean, sig_y_unc_mean = m(sig_xy_unc_mean[0,:], sig_xy_unc_mean[1,:])
 sig_x_unc_min, sig_y_unc_min = m(sig_xy_unc_min[0,:], sig_xy_unc_min[1,:])
 sig_x_unc_max, sig_y_unc_max = m(sig_xy_unc_max[0,:], sig_xy_unc_max[1,:])
-#unsig_x_mean, unsig_y_mean = m(unsig_xy_mean[0,:], unsig_xy_mean[1,:])
-#unsig_x_min, unsig_y_min = m(unsig_xy_min[0,:], unsig_xy_min[1,:])
-#unsig_x_max, unsig_y_max = m(unsig_xy_max[0,:], unsig_xy_max[1,:])
-#obs_x, obs_y = m(obs_xy[0,:], obs_xy[1,:])
+# unsig_x_mean, unsig_y_mean = m(unsig_xy_mean[0,:], unsig_xy_mean[1,:])
+# unsig_x_min, unsig_y_min = m(unsig_xy_min[0,:], unsig_xy_min[1,:])
+# unsig_x_max, unsig_y_max = m(unsig_xy_max[0,:], unsig_xy_max[1,:])
+# obs_x, obs_y = m(obs_xy[0,:], obs_xy[1,:])
 m0 = m.scatter(sig_x, sig_y, s=1, marker='o', color='black', alpha=1., zorder=6)
-#m.scatter(sig_x_unc_mean, sig_y_unc_mean, s=1, marker='o', color='black', zorder=8, edgecolor='k')
-#m.scatter(unsig_x, unsig_y, s=1, marker='o', color='black', alpha=.3, zorder=8)
-#m.scatter(obs_x, obs_y, s=30, marker='^', color='white', edgecolor='k', zorder=9)
+# m.scatter(sig_x_unc_mean, sig_y_unc_mean, s=1, marker='o', color='black', zorder=8, edgecolor='k')
+# m.scatter(unsig_x, unsig_y, s=1, marker='o', color='black', alpha=.3, zorder=8)
+# m.scatter(obs_x, obs_y, s=30, marker='^', color='white', edgecolor='k', zorder=9)
 m1 = m.scatter(sig_x_unc_min, sig_y_unc_min, s=15, marker='o', color='#00CC00', zorder=7, edgecolor='k')
 m2 = m.scatter(sig_x_unc_mean, sig_y_unc_mean, s=15, marker='o', color='#FFFF00', zorder=8, edgecolor='k')
 m3 = m.scatter(sig_x_unc_max, sig_y_unc_max, s=15, marker='o', color='#FF3300', zorder=9, edgecolor='k')
-#labels = ['significant',r'detectable, best case', r'detectable', r'detectable worst case']
-#plt.legend([m0, m1, m2, m3], labels, loc=4)
+# labels = ['significant',r'detectable, best case', r'detectable', r'detectable worst case']
+# plt.legend([m0, m1, m2, m3], labels, loc=4)
 
-#plt.savefig('Detectability.png')
+# plt.savefig('Detectability.png')
 plt.show()
 
 #%%============================================================================
 # Plot covariance matrix
 #==============================================================================
-#im = plt.imshow(P[0:300,0:300], origin='lower', interpolation='nearest')
-#plt.colorbar(im)
-#plt.show()
+# im = plt.imshow(P[0:300,0:300], origin='lower', interpolation='nearest')
+# plt.colorbar(im)
+# plt.show()
