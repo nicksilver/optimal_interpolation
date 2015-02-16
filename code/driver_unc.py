@@ -16,7 +16,11 @@ import os
 import geotiff
 import uncertainty
 import dassim
+<<<<<<< HEAD
 #import bootclim
+=======
+import bootclim
+>>>>>>> 3d77d056e94f4995e65996532654f6eff50f13f8
 
 #==============================================================================
 # Bring in data
@@ -24,29 +28,52 @@ import dassim
 ncells = 8639
 nobs = 58
 HOME = os.path.expanduser("~/")
+<<<<<<< HEAD
 data_path = HOME+"Copy/workspace/bayes_precip/data/"
+=======
+data_path = "./"#HOME+"Copy/workspace/bayes_precip/data/"
+>>>>>>> 3d77d056e94f4995e65996532654f6eff50f13f8
 
 gfs_data = np.loadtxt(data_path+"win_gfs.asc")
 pcm_h_data = np.loadtxt(data_path+"PR_win_pcm_hist.asc")
 #pcm_h_boot = bootclim.bootstrap(pcm_h_data, 100)
+<<<<<<< HEAD
 pcm_f_data = np.loadtxt(data_path+"PR_win_pcm_fut.asc")[0:6, :]  # pick the first 6 years of the data
 #pcm_f_boot = bootclim.bootstrap(pcm_f_data, 100)
 obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt").T
 
 obs_mask = np.loadtxt(data_path+"snotel_flag.txt")
 xyz = np.loadtxt(data_path+'ascGrid.xyz', skiprows=1)[:, 0:2]
+=======
+pcm_f_data = np.loadtxt(data_path+"PR_win_pcm_fut.asc")[0:6,:]  # pick the first 6 years of the data
+#pcm_f_boot = bootclim.bootstrap(pcm_f_data, 100)
+#obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt")[:,:-4].T
+obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt").T
+
+obs_mask = np.loadtxt(data_path+"snotel_flag.txt")
+xyz = np.loadtxt(data_path+'ascGrid.xyz', skiprows=1)[:,0:2]
+>>>>>>> 3d77d056e94f4995e65996532654f6eff50f13f8
 dem = np.loadtxt(data_path+"dem.txt", skiprows=5)
 
 #==============================================================================
 # Matrices for optimal interpolation
 #%%============================================================================
 doy_start = 1  # Jan. 1st
+<<<<<<< HEAD
 doy_end = 120  # Apr. 30th (extra month to compensate for not including december)
 unc_obs = uncertainty.ObsUncertainty(obs_data, obs_mask, gfs_data)  # obs uncertainty object
 sig_min, sig_mean, sig_max = unc_obs.lopez(doy_start, doy_end)  # representativity error
 R_min = 1*sig_min**2*np.diag(np.ones(nobs))
 R_mean = 2*sig_mean**2*np.diag(np.ones(nobs))
 R_max = 160000*sig_max**2*np.diag(np.ones(nobs))  # large number worst case scenario
+=======
+doy_end = 120  # Apr. 30th
+unc_obs = uncertainty.ObsUncertainty(obs_data, obs_mask, gfs_data)  # obs uncertainty object
+sig_min, sig_mean, sig_max = unc_obs.lopez(doy_start, doy_end)  # rep. error (dates go through april to compensate for not including december)
+R_min = 1*sig_min**2*np.diag(np.ones(nobs))
+R_mean = 2*sig_mean**2*np.diag(np.ones(nobs))
+R_max = 160000*sig_max**2*np.diag(np.ones(nobs)) #large number worst case scenario
+>>>>>>> 3d77d056e94f4995e65996532654f6eff50f13f8
 P_cov = 1.2*np.cov(gfs_data.T)  # mod cov directly from data 
 Unc = np.sqrt(np.diag(P_cov))
 X = np.mean(gfs_data, axis=0).reshape(ncells, 1)  # model matrix
@@ -57,7 +84,11 @@ H = dassim.H_mat(obs_mask)
 #==============================================================================
 # Optimal Interpolation
 #%%============================================================================
+<<<<<<< HEAD
 R = R_min  # + np.diag(0.25*Z[:,0])**2  # set R matrix
+=======
+R = R_min #+ np.diag(0.25*Z[:,0])**2  # set R matrix
+>>>>>>> 3d77d056e94f4995e65996532654f6eff50f13f8
 K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
@@ -127,8 +158,13 @@ sig_unc_min = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_min, rho=0.05,
                                 alt="two.sided")  # perform t-test with uncert.
 sig_unc_max = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_max, rho=0.05,
                                 alt="two.sided")  # perform t-test with uncert. 
+<<<<<<< HEAD
 #inv_vals = ttest.apply_invttest(gfs_data, mu=mu_0, df=8, p=0.95) # inverted t-test
 #inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95) # inverted t-test with uncertainty added
+=======
+inv_vals = ttest.apply_invttest(gfs_data, mu=mu_0, df=8, p=0.95) # inverted t-test
+inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95) # inverted t-test with uncertainty added
+>>>>>>> 3d77d056e94f4995e65996532654f6eff50f13f8
 
 unsig_unc_mean = mu_0
 unsig_unc_min = mu_0
