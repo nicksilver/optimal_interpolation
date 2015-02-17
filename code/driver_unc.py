@@ -16,7 +16,6 @@ import ttest
 import geotiff
 import uncertainty
 import dassim
-# import bootclim
 
 #==============================================================================
 # Bring in data
@@ -28,9 +27,7 @@ data_path = HOME+"Copy/workspace/bayes_precip/data/"
 
 gfs_data = np.loadtxt(data_path+"win_gfs.asc")
 pcm_h_data = np.loadtxt(data_path+"PR_win_pcm_hist.asc")
-# pcm_h_boot = bootclim.bootstrap(pcm_h_data, 100)
 pcm_f_data = np.loadtxt(data_path+"PR_win_pcm_fut.asc")[0:6, :]  # pick the first 6 years of the data
-# pcm_f_boot = bootclim.bootstrap(pcm_f_data, 100)
 obs_data = np.loadtxt(data_path+"snotelPrec_matrix.txt").T
 
 obs_mask = np.loadtxt(data_path+"snotel_flag.txt")
@@ -44,10 +41,10 @@ doy_start = 1  # Jan. 1st
 doy_end = 120  # Apr. 30th (extra month to compensate for not including december)
 unc_obs = uncertainty.ObsUncertainty(obs_data, obs_mask, gfs_data)  # obs uncertainty object
 sig_min, sig_mean, sig_max = unc_obs.lopez(doy_start, doy_end)  # representativity error
-R_min = 1*sig_min**2*np.diag(np.ones(nobs))
-R_mean = 2*sig_mean**2*np.diag(np.ones(nobs))
-R_max = 160000*sig_max**2*np.diag(np.ones(nobs))  # large number worst case scenario
-P_cov = 1.2*np.cov(gfs_data.T)  # mod cov directly from data 
+R_min = 0.5*sig_mean**2*np.diag(np.ones(nobs))  # multiply by scalar for sensitivity analysis
+R_mean = 1.0*sig_mean**2*np.diag(np.ones(nobs))  # multiply by scalar for sensitivity analysis
+R_max = 2.0*sig_mean**2*np.diag(np.ones(nobs))   # multiply by scalar for sensitivity analysis
+P_cov = np.cov(gfs_data.T)  # mod cov directly from data
 Unc = np.sqrt(np.diag(P_cov))
 X = np.mean(gfs_data, axis=0).reshape(ncells, 1)  # model matrix
 Z = np.mean(obs_data, axis=0).T.reshape(np.sum(obs_mask), 1)  # obs matrix
@@ -57,78 +54,80 @@ H = dassim.H_mat(obs_mask)
 #==============================================================================
 # Optimal Interpolation
 #%%============================================================================
-R = R_min #+ np.diag(0.25*Z[:,0])**2  # set R matrix
+R = R_min
 K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
 Unc_plus = np.sqrt(np.diag(P_plus))
-# np.save("stdev_post_min", Unc_plus)
-# P_plus = np.load("p_post_mean.npy")
+np.save(data_path+"stdev_post_min", Unc_plus)
 print "stdev_post_min written..."
 
-R = R_mean  # + np.diag(0.25*Z[:,0])**2  # set R matrix
+R = R_mean
 K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
 Unc_plus = np.sqrt(np.diag(P_plus))
-# np.save("stdev_post_mean", Unc_plus)
-# P_plus = np.load("p_post_mean.npy")
+np.save(data_path+"stdev_post_mean", Unc_plus)
 print "stdev_post_mean written..."
 
-
-R = R_max  # + np.diag(0.25*Z[:,0])**2  # set R matrix
+R = R_max
 K = dassim.kalman_K(P, H, R)
 X_plus = dassim.opt_interp(X, H, K, Z)
 P_plus = dassim.update_P(K, H, P)
 Unc_plus = np.sqrt(np.diag(P_plus))
-# np.save("stdev_post_max", Unc_plus)
-# P_plus = np.load("p_post_max.npy")
+np.save(data_path+"stdev_post_max", Unc_plus)
 print "stdev_post_max written..."
 
 
 #==============================================================================
 # Load mean error of precipitation estimates
 #%%============================================================================
-Unc_plus_mean = np.load("stdev_post_mean.npy")
+Unc_plus_mean = np.load(data_path+"stdev_post_mean.npy")
 est_var_mean =  Unc_plus_mean * Unc_plus_mean
 
-Unc_plus_min = np.load("stdev_post_min.npy")
+Unc_plus_min = np.load(data_path+"stdev_post_min.npy")
 est_var_min =  Unc_plus_min * Unc_plus_min
 
-Unc_plus_max = np.load("stdev_post_max.npy")
+Unc_plus_max = np.load(data_path+"stdev_post_max.npy")
 est_var_max =  Unc_plus_max * Unc_plus_max
+
 #==============================================================================
 # T-tests
 #%%============================================================================
-mu_0 = np.zeros((pcm_h_data.shape[1]))
-# mu_unc_mean = 2*Unc_plus_mean*1.0  # uncertainty is ~2X stdev
-# mu_unc_min = 2*Unc_plus_mean*0.75  # uncertainty is ~2X stdev
-# mu_unc_max = 2*Unc_plus_mean*1.25  # uncertainty is ~2X stdev
-
 v_h = np.var(pcm_h_data, axis=0, ddof=1)
 v_f = np.var(pcm_f_data, axis=0, ddof=1)
 mean_h = np.mean(pcm_h_data, axis=0)
 mean_f = np.mean(pcm_f_data, axis=0)
 
-mu_unc_min = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.2*est_var_min)) *(mean_f - mean_h)
+mu_0 = np.zeros((pcm_h_data.shape[1]))
+
+mu_unc_min = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.*est_var_min)) * (mean_f - mean_h)
 print mu_unc_min
 
-mu_unc_mean = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.2*est_var_mean)) *(mean_f - mean_h)
+mu_unc_mean = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.*est_var_mean)) * (mean_f - mean_h)
 print mu_unc_mean
 
-mu_unc_max = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.2*est_var_max)) *(mean_f - mean_h)
+mu_unc_max = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.*est_var_max)) * (mean_f - mean_h)
 print mu_unc_max
+
+#==============================================================================
+# Uncomment below (and comment above) to run old analysis
+#==============================================================================
+# mu_unc_min = 2.*Unc_plus_min
+# mu_unc_mean = 2.*Unc_plus_mean
+# mu_unc_max = 2.*Unc_plus_max
+#==============================================================================
 
 sig = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_0, rho=0.05,
                         alt="two.sided")  # perform t-test actual
 sig_unc_mean = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_mean, rho=0.05,
-                                 alt="two.sided")  # perform t-test with uncert.
+                                 alt="greater")  # perform t-test with uncert.
 sig_unc_min = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_min, rho=0.05,
-                                alt="two.sided")  # perform t-test with uncert.
+                                alt="greater")  # perform t-test with uncert.
 sig_unc_max = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_max, rho=0.05,
-                                alt="two.sided")  # perform t-test with uncert. 
-inv_vals = ttest.apply_invttest(gfs_data, mu=mu_0, df=8, p=0.95) # inverted t-test
-inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95)  # inverted t-test with uncertainty added
+                                alt="greater")  # perform t-test with uncert.
+# inv_vals = ttest.apply_invttest(gfs_data, mu=mu_0, df=8, p=0.95) # inverted t-test
+# inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95)  # inverted t-test with uncertainty added
 
 unsig_unc_mean = mu_0
 unsig_unc_min = mu_0
@@ -144,24 +143,24 @@ xy_unsig_coord_mean = ttest.sigcoords(xyz, unsig_unc_mean)
 xy_unsig_coord_min = ttest.sigcoords(xyz, unsig_unc_min)
 xy_unsig_coord_max = ttest.sigcoords(xyz, unsig_unc_max)
 obs_coord = ttest.sigcoords(xyz, obs_mask)
-diff = 100*(Unc - Unc_plus_mean)/Unc  # np.mean(pcm_f_data, axis=0) - np.mean(pcm_h_data, axis=0)
+diff = np.mean(pcm_f_data, axis=0) - np.mean(pcm_h_data, axis=0)
 
 #%%============================================================================
 # Gaussianity tests   
 #==============================================================================
-res_wrf = ttest.gausstest(gfs_data)
-res_snot = ttest.gausstest(obs_data)
+# res_wrf = ttest.gausstest(gfs_data)
+# res_snot = ttest.gausstest(obs_data)
 
 #%%============================================================================
 # Save coordinate files    
 #==============================================================================
-# np.savetxt('unc_coords.csv', xy_unc_coord_mean.T)
-# np.savetxt('sig_coords.csv', xy_sig_coord.T)
-# np.savetxt('unsig_coords.csv', xy_unsig_coord_mean.T)
+# np.savetxt(data_path+'unc_coords.csv', xy_unc_coord_mean.T)
+# np.savetxt(data_path+'sig_coords.csv', xy_sig_coord.T)
+# np.savetxt(data_path+'unsig_coords.csv', xy_unsig_coord_mean.T)
 
 '''
 Need to use QGIS to calculate aspect and elev of the different coordinate sets.
-Import the above .csv file on top of aspect and DEM rasters.  The use the point
+Import the above .csv file on top of aspect and DEM rasters.  Then use the point
 sampling tool to extract the aspect of elevation at each point.
 '''
 
@@ -223,16 +222,19 @@ Plot colors:
 m.drawstates(linewidth=1, zorder=7)
 m.drawcountries(linewidth=1, zorder=6)
 m.imshow(elev, cmap=plt.cm.gray)
-p = m.contourf(lat, lon, diff_grid, cmap=plt.cm.rainbow, alpha=0.3,
-               antialiased=True, zorder=5, levels=np.linspace(0,64,9))
-p = m.contourf(lat, lon, diff_grid, cmap=plt.cm.rainbow, alpha=0.3,
-               antialiased=True, zorder=5, levels=np.linspace(0,64,9))
+lmin = -100.
+lmax = 700
+
+p = m.contourf(lat, lon, diff_grid, cmap=plt.cm.gray, alpha=0.3,
+               antialiased=True, zorder=5, levels=np.linspace(lmin, lmax, 9))
+p = m.contourf(lat, lon, diff_grid, cmap=plt.cm.gray, alpha=0.3,
+               antialiased=True, zorder=5, levels=np.linspace(lmin, lmax, 9))
 cbar = m.colorbar(p, location='right', pad="5%")
 
 cbar.set_alpha(1)
 cbar.draw_all()
-cbar.set_label("percent difference")
-sig_x, sig_y = m(sig_xy[0,:], sig_xy[1,:])
+cbar.set_label("mm/winter")
+sig_x, sig_y = m(sig_xy[0, :], sig_xy[1, :])
 sig_x_unc_mean, sig_y_unc_mean = m(sig_xy_unc_mean[0,:], sig_xy_unc_mean[1,:])
 sig_x_unc_min, sig_y_unc_min = m(sig_xy_unc_min[0,:], sig_xy_unc_min[1,:])
 sig_x_unc_max, sig_y_unc_max = m(sig_xy_unc_max[0,:], sig_xy_unc_max[1,:])
@@ -250,7 +252,7 @@ m3 = m.scatter(sig_x_unc_max, sig_y_unc_max, s=15, marker='o', color='#FF3300', 
 # labels = ['significant',r'detectable, best case', r'detectable', r'detectable worst case']
 # plt.legend([m0, m1, m2, m3], labels, loc=4)
 
-# plt.savefig('Detectability.png')
+#plt.savefig('/home/nick/Desktop/Detectability.png')
 plt.show()
 
 #%%============================================================================

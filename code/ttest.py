@@ -12,64 +12,6 @@ import numpy as np
 import math
 import scipy.stats as stats
 
-def mm_ttest(x1, x2, v1, v2, n1, n2, mu=0):
-    """
-    Performs an independent Student t test between the mean of two
-    samples with unequal 
-    variances and arbitrary sample sizes. This test is identical to the 
-    scipy implementation except that it permits to provide the sample
-    variances and sizes directly  
-    
-    Returns: t, p
-    t: quantile of the t distribution
-    p: probability of t
-    """
-    
-    if (v1==v2): #if samples have equal variance
-        df = n1 + n2 - 2
-        svar = ((n1 - 1) * v1 + (n2 - 1) * v2) / float(df)
-        denom = np.sqrt(svar * (1.0 / n1 + 1.0 / n2))
-    else:
-        vn1 = v1 / n1
-        vn2 = v2 / n2
-        df = ((vn1 + vn2)**2) / ((vn1**2) / (n1 - 1) + (vn2**2) / (n2 - 1))
-
-        # If df is undefined, variances are zero (assumes n1 > 0 & n2 > 0).
-        # Hence it doesn't matter what df is as long as it's not NaN.
-        df = np.where(np.isnan(df), 1, df)
-        denom = np.sqrt(vn1 + vn2)
-
-    d = x1 - x2 - mu
-    t = np.divide(d, denom)
-    t, prob = stats._ttest_finish(df, t)
-
-    return t, prob
-
-def apply_mm_ttest(py_data1, py_data2, mu, rho=0.05, alt="two.sided"):
-    """
-    Performs a paired t-test using the R t.test function
-    
-    :param py_data1: numpy array for sample 1
-    :param py_data2: numpy array for sample 2
-    :param mu: null hypothesis value (default = 0) 
-    :param rho: signifcance threshold for p-value
-    :param alt: whether to perform a "two.sided", "greater", "less" t-test. 
-    See description in R help for t.test function alternative.
-    
-    :return: binary dataframe where "1" indicates significance and "0"
-    indicates insignificant.
-    """
-    
-    result = np.zeros((py_data1.shape[1]))
-    for x in range(py_data1.shape[1]):
-        pval = r_ttest(py_data1[:,x], py_data2[:,x], mu[x], alt)
-        result[x] = pval
-    
-    sig = np.zeros((result.size))    
-    ind = result<=rho
-    sig[ind] = 1
-    return sig
-
 def equal_data(py_data1, py_data2):
     """
     Makes sure that the data has identical dimensions. If dimensions are 
