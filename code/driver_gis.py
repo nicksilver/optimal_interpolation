@@ -17,7 +17,7 @@ from scipy import stats
 # Bring in data
 #%%============================================================================
 HOME = os.path.expanduser("~/")
-data_path = HOME+"SparkleShare/workspace/bayes_unc_precip/data/"
+data_path = HOME+"Copy/workspace/bayes_unc_precip/data/"
 
 
 sig_aspect = np.loadtxt(data_path+"sig_aspect2.csv")

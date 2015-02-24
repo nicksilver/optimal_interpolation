@@ -138,9 +138,9 @@ diff = np.mean(pcm_f_data, axis=0) - np.mean(pcm_h_data, axis=0)
 #%%============================================================================
 # Save coordinate files    
 #==============================================================================
-# np.savetxt(data_path+'unc_coords.csv', xy_unc_coord_mean.T)
-# np.savetxt(data_path+'sig_coords.csv', xy_sig_coord.T)
-# np.savetxt(data_path+'unsig_coords.csv', xy_unsig_coord_mean.T)
+# np.savetxt(data_path+'unc_coords3.csv', xy_unc_coord_mean.T)
+# np.savetxt(data_path+'sig_coords3.csv', xy_sig_coord.T)
+# np.savetxt(data_path+'unsig_coords3.csv', xy_unsig_coord_mean.T)
 
 '''
 Need to use QGIS to calculate aspect and elev of the different coordinate sets.
@@ -217,7 +217,9 @@ cbar = m.colorbar(p, location='right', pad="5%")
 
 cbar.set_alpha(1)
 cbar.draw_all()
-cbar.set_label("mm/winter")
+cbar.set_label("mm/winter", size=14)
+cbar.ax.tick_params(labelsize=14)
+
 sig_x, sig_y = m(sig_xy[0, :], sig_xy[1, :])
 sig_x_unc_mean, sig_y_unc_mean = m(sig_xy_unc_mean[0,:], sig_xy_unc_mean[1,:])
 sig_x_unc_min, sig_y_unc_min = m(sig_xy_unc_min[0,:], sig_xy_unc_min[1,:])
@@ -233,11 +235,13 @@ m0 = m.scatter(sig_x, sig_y, s=1, marker='o', color='black', alpha=1., zorder=6)
 m1 = m.scatter(sig_x_unc_min, sig_y_unc_min, s=15, marker='o', color='#00CC00', zorder=7, edgecolor='k')
 m2 = m.scatter(sig_x_unc_mean, sig_y_unc_mean, s=15, marker='o', color='#FFFF00', zorder=8, edgecolor='k')
 m3 = m.scatter(sig_x_unc_max, sig_y_unc_max, s=15, marker='o', color='#FF3300', zorder=9, edgecolor='k')
-# labels = ['significant',r'detectable, best case', r'detectable', r'detectable worst case']
-# plt.legend([m0, m1, m2, m3], labels, loc=4)
+labels = ['significant', r'$\alpha = 0.25$', r'$\alpha = 1.00$', r'$\alpha = 4.00$']
+plt.legend([m0, m1, m2, m3], labels, loc=4, prop={'size': 15})
 
 #plt.savefig('/home/nick/Desktop/Detectability.png')
 plt.show()
+
+
 
 #%%============================================================================
 # Plot covariance matrix
