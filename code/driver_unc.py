@@ -41,9 +41,9 @@ doy_start = 1  # Jan. 1st
 doy_end = 120  # Apr. 30th (extra month to compensate for not including december)
 unc_obs = uncertainty.ObsUncertainty(obs_data, obs_mask, gfs_data)  # obs uncertainty object
 sig_min, sig_mean, sig_max = unc_obs.lopez(doy_start, doy_end)  # representativity error
-R_min = 0.5*sig_mean**2*np.diag(np.ones(nobs))  # multiply by scalar for sensitivity analysis
+R_min = 0.25*sig_mean**2*np.diag(np.ones(nobs))  # multiply by scalar for sensitivity analysis
 R_mean = 1.0*sig_mean**2*np.diag(np.ones(nobs))  # multiply by scalar for sensitivity analysis
-R_max = 2.0*sig_mean**2*np.diag(np.ones(nobs))   # multiply by scalar for sensitivity analysis
+R_max = 4.0*sig_mean**2*np.diag(np.ones(nobs))   # multiply by scalar for sensitivity analysis
 P_cov = np.cov(gfs_data.T)  # mod cov directly from data
 Unc = np.sqrt(np.diag(P_cov))
 X = np.mean(gfs_data, axis=0).reshape(ncells, 1)  # model matrix
@@ -83,13 +83,13 @@ print "stdev_post_max written..."
 # Load mean error of precipitation estimates
 #%%============================================================================
 Unc_plus_mean = np.load(data_path+"stdev_post_mean.npy")
-est_var_mean =  Unc_plus_mean * Unc_plus_mean
+est_var_mean = Unc_plus_mean * Unc_plus_mean
 
 Unc_plus_min = np.load(data_path+"stdev_post_min.npy")
-est_var_min =  Unc_plus_min * Unc_plus_min
+est_var_min = Unc_plus_min * Unc_plus_min
 
 Unc_plus_max = np.load(data_path+"stdev_post_max.npy")
-est_var_max =  Unc_plus_max * Unc_plus_max
+est_var_max = Unc_plus_max * Unc_plus_max
 
 #==============================================================================
 # T-tests
@@ -100,23 +100,9 @@ mean_h = np.mean(pcm_h_data, axis=0)
 mean_f = np.mean(pcm_f_data, axis=0)
 
 mu_0 = np.zeros((pcm_h_data.shape[1]))
-
-mu_unc_min = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.*est_var_min)) * (mean_f - mean_h)
-print mu_unc_min
-
-mu_unc_mean = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.*est_var_mean)) * (mean_f - mean_h)
-print mu_unc_mean
-
-mu_unc_max = (1 - np.sqrt(v_h+v_f)/np.sqrt(v_h+v_f+2.*est_var_max)) * (mean_f - mean_h)
-print mu_unc_max
-
-#==============================================================================
-# Uncomment below (and comment above) to run old analysis
-#==============================================================================
-# mu_unc_min = 2.*Unc_plus_min
-# mu_unc_mean = 2.*Unc_plus_mean
-# mu_unc_max = 2.*Unc_plus_max
-#==============================================================================
+mu_unc_min = 2.*Unc_plus_min
+mu_unc_mean = 2.*Unc_plus_mean
+mu_unc_max = 2.*Unc_plus_max
 
 sig = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_0, rho=0.05,
                         alt="two.sided")  # perform t-test actual
@@ -126,8 +112,6 @@ sig_unc_min = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_min, rho=0.05,
                                 alt="greater")  # perform t-test with uncert.
 sig_unc_max = ttest.apply_ttest(pcm_f_data, pcm_h_data, mu=mu_unc_max, rho=0.05,
                                 alt="greater")  # perform t-test with uncert.
-# inv_vals = ttest.apply_invttest(gfs_data, mu=mu_0, df=8, p=0.95) # inverted t-test
-# inv_vals_unc = ttest.apply_invttest(gfs_data, mu=mu_unc_mean, df=8, p=0.95)  # inverted t-test with uncertainty added
 
 unsig_unc_mean = mu_0
 unsig_unc_min = mu_0
