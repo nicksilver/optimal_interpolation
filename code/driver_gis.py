@@ -17,7 +17,7 @@ from scipy import stats
 # Bring in data
 #%%============================================================================
 HOME = os.path.expanduser("~/")
-data_path = HOME+"Copy/workspace/bayes_unc_precip/data/"
+data_path = HOME+"Copy/workspace/bayes_precip/data/"
 
 
 sig_aspect = np.loadtxt(data_path+"sig_aspect2.csv")
@@ -144,7 +144,7 @@ plt.fill_between(x, dens_unc(x), color='DarkOrange', alpha=0.5)
 plt.xlim(0,360)
 plt.xlabel('Aspect (degrees)')
 plt.ylabel('Frequency')
-l = plt.legend((m, n, o),('domain', 'significant', 'certain'), loc=0 )
+l = plt.legend((m, n, o),('domain', 'significant', 'detectable'), loc=0 )
 for lobj in l.legendHandles:
     lobj.set_linewidth(4.0)
 plt.show()
@@ -177,7 +177,7 @@ plt.xlim((400, 2500))
 plt.ylim((0, 0.002))
 plt.xlabel("Elevation (m)")
 plt.ylabel("Frequency")
-l = plt.legend((q, r, s),('domain', 'significant', 'certain'), loc=0 )
+l = plt.legend((q, r, s),('domain', 'significant', 'detectable'), loc=0 )
 for lobj in l.legendHandles:
     lobj.set_linewidth(4.0)
 plt.show()
