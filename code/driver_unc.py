@@ -54,29 +54,29 @@ H = dassim.H_mat(obs_mask)
 #==============================================================================
 # Optimal Interpolation
 #%%============================================================================
-R = R_min
-K = dassim.kalman_K(P, H, R)
-X_plus = dassim.opt_interp(X, H, K, Z)
-P_plus = dassim.update_P(K, H, P)
-Unc_plus = np.sqrt(np.diag(P_plus))
-np.save(data_path+"stdev_post_min", Unc_plus)
-print "stdev_post_min written..."
-
-R = R_mean
-K = dassim.kalman_K(P, H, R)
-X_plus = dassim.opt_interp(X, H, K, Z)
-P_plus = dassim.update_P(K, H, P)
-Unc_plus = np.sqrt(np.diag(P_plus))
-np.save(data_path+"stdev_post_mean", Unc_plus)
-print "stdev_post_mean written..."
-
-R = R_max
-K = dassim.kalman_K(P, H, R)
-X_plus = dassim.opt_interp(X, H, K, Z)
-P_plus = dassim.update_P(K, H, P)
-Unc_plus = np.sqrt(np.diag(P_plus))
-np.save(data_path+"stdev_post_max", Unc_plus)
-print "stdev_post_max written..."
+# R = R_min
+# K = dassim.kalman_K(P, H, R)
+# X_plus = dassim.opt_interp(X, H, K, Z)
+# P_plus = dassim.update_P(K, H, P)
+# Unc_plus = np.sqrt(np.diag(P_plus))
+# np.save(data_path+"stdev_post_min", Unc_plus)
+# print "stdev_post_min written..."
+#
+# R = R_mean
+# K = dassim.kalman_K(P, H, R)
+# X_plus = dassim.opt_interp(X, H, K, Z)
+# P_plus = dassim.update_P(K, H, P)
+# Unc_plus = np.sqrt(np.diag(P_plus))
+# np.save(data_path+"stdev_post_mean", Unc_plus)
+# print "stdev_post_mean written..."
+#
+# R = R_max
+# K = dassim.kalman_K(P, H, R)
+# X_plus = dassim.opt_interp(X, H, K, Z)
+# P_plus = dassim.update_P(K, H, P)
+# Unc_plus = np.sqrt(np.diag(P_plus))
+# np.save(data_path+"stdev_post_max", Unc_plus)
+# print "stdev_post_max written..."
 
 
 #==============================================================================
